@@ -1,0 +1,471 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#0d47a1">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <link rel="manifest" href="manifest.json">
+  <link rel="apple-touch-icon" href="icons/icon-192.png">
+  <title>ตั้งค่าสูตรคำนวณ</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: 'Sarabun', 'Segoe UI', sans-serif;
+      background: #f0f4f8;
+      min-height: 100vh;
+      display: flex;
+      align-items: flex-start;
+      justify-content: center;
+      padding: 24px 20px;
+    }
+    .card {
+      background: white;
+      border-radius: 16px;
+      box-shadow: 0 4px 24px rgba(0,0,0,0.10);
+      width: 100%;
+      max-width: 600px;
+      overflow: hidden;
+    }
+    .card-header {
+      background: linear-gradient(135deg, #37474f, #263238);
+      color: white;
+      padding: 28px 32px;
+    }
+    .back-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      color: rgba(255,255,255,0.75);
+      font-size: 0.85rem;
+      text-decoration: none;
+      margin-bottom: 14px;
+      transition: color 0.15s;
+    }
+    .back-btn:hover { color: #fff; }
+    .card-header h1 { font-size: 1.5rem; font-weight: 700; margin-bottom: 4px; }
+    .card-header p { opacity: 0.75; font-size: 0.9rem; }
+    .card-body { padding: 28px 32px; }
+    .section { margin-bottom: 30px; }
+    .section-title {
+      font-size: 0.95rem;
+      font-weight: 700;
+      color: #1a73e8;
+      margin-bottom: 14px;
+      padding-bottom: 8px;
+      border-bottom: 2px solid #e8f0fe;
+    }
+
+    /* Rate table */
+    .rate-table { width: 100%; border-collapse: collapse; font-size: 0.9rem; }
+    .rate-table th { background: #e8f0fe; color: #1565c0; padding: 8px 10px; text-align: center; font-weight: 600; }
+    .rate-table td { padding: 5px 8px; text-align: center; border-bottom: 1px solid #f0f4f8; }
+    .rate-table input[type="number"] {
+      width: 82px; border: 1.5px solid #dde1e7; border-radius: 7px;
+      padding: 6px 8px; font-size: 0.9rem; font-family: inherit; text-align: center;
+    }
+    .rate-table input[type="number"]:focus { outline: none; border-color: #1a73e8; }
+    .btn-del {
+      background: none; border: none; color: #bbb; cursor: pointer;
+      font-size: 1rem; padding: 4px 8px; border-radius: 4px;
+      transition: color 0.15s, background 0.15s;
+    }
+    .btn-del:hover { color: #e53935; background: #fce4ec; }
+    .btn-add-row {
+      margin-top: 10px; background: none; border: 1.5px dashed #90caf9;
+      color: #1a73e8; border-radius: 8px; padding: 8px 0; font-family: inherit;
+      font-size: 0.88rem; cursor: pointer; width: 100%;
+      transition: background 0.15s, border-color 0.15s;
+    }
+    .btn-add-row:hover { background: #e8f0fe; border-color: #1a73e8; }
+
+    /* Form rows */
+    .form-row { display: flex; align-items: center; flex-wrap: wrap; gap: 8px; margin-bottom: 10px; }
+    .form-row label { font-size: 0.9rem; color: #555; white-space: nowrap; }
+    .form-row input[type="number"] {
+      width: 96px; border: 1.5px solid #dde1e7; border-radius: 8px;
+      padding: 8px 10px; font-size: 0.95rem; font-family: inherit; text-align: center;
+    }
+    .form-row input[type="number"]:focus { outline: none; border-color: #1a73e8; }
+    .unit { font-size: 0.85rem; color: #888; }
+
+    /* BTU grid */
+    .btu-grid { display: grid; grid-template-columns: 1fr auto auto; gap: 8px 10px; align-items: center; font-size: 0.9rem; }
+    .btu-grid label { color: #555; }
+    .btu-grid input[type="number"] {
+      width: 100px; border: 1.5px solid #dde1e7; border-radius: 8px;
+      padding: 8px 10px; font-size: 0.95rem; font-family: inherit; text-align: right;
+    }
+    .btu-grid input[type="number"]:focus { outline: none; border-color: #1a73e8; }
+
+    /* Per-product fee items */
+    .pf-block {
+      border: 1.5px solid #e0e8f4; border-radius: 12px;
+      margin-bottom: 12px; overflow: hidden;
+    }
+    .pf-header {
+      display: flex; align-items: center; justify-content: space-between;
+      background: #f0f4f8; padding: 10px 14px; font-weight: 700; font-size: 0.9rem; color: #263238;
+    }
+    .btn-add-fee {
+      background: none; border: 1.5px solid #1a73e8; color: #1a73e8;
+      border-radius: 6px; padding: 4px 10px; font-family: inherit; font-size: 0.8rem;
+      cursor: pointer; transition: background 0.15s;
+    }
+    .btn-add-fee:hover { background: #e8f0fe; }
+    .pf-list { padding: 8px 10px; }
+    .pf-empty { font-size: 0.82rem; color: #aaa; text-align: center; padding: 8px 0; }
+
+    /* Fee card */
+    .fee-card {
+      background: #fafbfc; border: 1.5px solid #e8edf2; border-radius: 9px;
+      padding: 10px 12px; margin-bottom: 8px;
+    }
+    .fc-row-1 {
+      display: grid; grid-template-columns: 1fr auto auto; gap: 6px; align-items: center; margin-bottom: 8px;
+    }
+    .fi-label {
+      border: 1.5px solid #dde1e7; border-radius: 7px; padding: 6px 9px;
+      font-size: 0.88rem; font-family: inherit; width: 100%;
+    }
+    .fi-label:focus { outline: none; border-color: #1a73e8; }
+    .fi-type {
+      border: 1.5px solid #dde1e7; border-radius: 7px; padding: 6px 8px;
+      font-size: 0.82rem; font-family: inherit; background: white; cursor: pointer;
+    }
+    .fi-type:focus { outline: none; border-color: #1a73e8; }
+    .fc-config { margin-bottom: 6px; font-size: 0.85rem; color: #555; display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+    .fc-config input[type="number"] {
+      width: 72px; border: 1.5px solid #dde1e7; border-radius: 6px;
+      padding: 5px 7px; font-size: 0.85rem; font-family: inherit; text-align: center;
+    }
+    .fc-config input[type="number"]:focus { outline: none; border-color: #1a73e8; }
+    .fc-timing { display: flex; gap: 16px; }
+    .fc-timing label { display: flex; align-items: center; gap: 5px; font-size: 0.84rem; color: #555; cursor: pointer; }
+
+    /* Buttons */
+    .btn-save {
+      width: 100%; padding: 14px; background: linear-gradient(135deg, #1a73e8, #0d47a1);
+      color: white; border: none; border-radius: 10px; font-size: 1.05rem;
+      font-family: inherit; font-weight: 700; cursor: pointer; transition: opacity 0.2s; margin-bottom: 10px;
+    }
+    .btn-save:hover { opacity: 0.9; }
+    .btn-reset {
+      width: 100%; padding: 10px; background: none; border: 1.5px solid #dde1e7;
+      color: #999; border-radius: 10px; font-size: 0.9rem; font-family: inherit;
+      cursor: pointer; transition: all 0.2s;
+    }
+    .btn-reset:hover { border-color: #e53935; color: #e53935; }
+
+    /* Toast */
+    .toast {
+      position: fixed; bottom: 28px; left: 50%;
+      transform: translateX(-50%) translateY(80px);
+      background: #37474f; color: white; padding: 12px 26px;
+      border-radius: 10px; font-weight: 600; font-size: 0.95rem;
+      transition: transform 0.28s cubic-bezier(.34,1.56,.64,1); z-index: 999; white-space: nowrap;
+    }
+    .toast.show { transform: translateX(-50%) translateY(0); }
+  </style>
+</head>
+<body>
+
+<div class="card">
+  <div class="card-header">
+    <a class="back-btn" href="index.html">← หน้าหลัก</a>
+    <h1>ตั้งค่าสูตรคำนวณ</h1>
+    <p>แก้ไขอัตรา, รายการค่าใช้จ่าย และวิธีการคำนวณสำหรับสินค้าแต่ละประเภท</p>
+  </div>
+
+  <div class="card-body">
+
+    <!-- 1. อัตราดอกเบี้ย -->
+    <div class="section">
+      <div class="section-title">💰 อัตราดอกเบี้ยตามจำนวนงวด</div>
+      <table class="rate-table">
+        <thead>
+          <tr><th>จำนวนงวด (เดือน)</th><th>อัตราดอกเบี้ย (%)</th><th></th></tr>
+        </thead>
+        <tbody id="rate-tbody"></tbody>
+      </table>
+      <button class="btn-add-row" onclick="addRateRow()">+ เพิ่มแถวจำนวนงวด</button>
+    </div>
+
+    <!-- 2. ตาราง BTU -->
+    <div class="section">
+      <div class="section-title">💨 ตาราง BTU (ใช้กับรายการประเภท "ตาราง BTU")</div>
+      <div class="btu-grid">
+        <label>9,000 BTU</label>
+        <input type="number" id="btu-9000" min="0" value="1250">
+        <span class="unit">บาท</span>
+        <label>12,000–15,000 BTU</label>
+        <input type="number" id="btu-12000" min="0" value="3000">
+        <span class="unit">บาท</span>
+        <label>18,000 BTU ขึ้นไป</label>
+        <input type="number" id="btu-18000" min="0" value="3500">
+        <span class="unit">บาท</span>
+      </div>
+    </div>
+
+    <!-- 3. การปัดค่างวด -->
+    <div class="section">
+      <div class="section-title">🔢 การปัดค่างวด</div>
+      <div class="form-row">
+        <label>ปัดให้ลงท้ายด้วย</label>
+        <input type="number" id="round-to" min="0" max="99" value="90">
+        <span class="unit">(ตัวเลข 0–99)</span>
+      </div>
+    </div>
+
+    <!-- 4. ค่าใช้จ่ายต่อประเภทสินค้า -->
+    <div class="section">
+      <div class="section-title">📦 ค่าบริการเพิ่มเติมต่อประเภทสินค้า</div>
+      <p style="font-size:0.82rem;color:#888;margin-bottom:14px;">เพิ่ม/ลบรายการค่าใช้จ่ายได้อิสระ — เลือกวิธีคำนวณและช่วงเวลาที่บวก (ก่อน/หลังดอกเบี้ย)</p>
+      <div id="all-product-fees"></div>
+    </div>
+
+    <button class="btn-save" onclick="saveSettings()">บันทึกการตั้งค่า</button>
+    <button class="btn-reset" onclick="resetDefaults()">รีเซ็ตค่าเริ่มต้น</button>
+
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+  const PRODUCTS = [
+    { key: 'ตู้เย็น',       icon: '🧊' },
+    { key: 'เครื่องซักผ้า', icon: '🫧' },
+    { key: 'ตู้แช่',        icon: '❄️' },
+    { key: 'ทีวี',          icon: '📺' },
+    { key: 'แอร์',          icon: '💨' }
+  ];
+
+  const DEFAULTS = {
+    rates: [
+      [6, 70], [7, 75], [8, 80], [9, 90], [10, 100],
+      [11, 110], [12, 120], [13, 130], [14, 140], [15, 150]
+    ],
+    btuCosts: { '9000': 1250, '12000': 3000, '18000': 3500 },
+    roundTo: 90,
+    products: {
+      'ตู้เย็น':      { fees: [] },
+      'เครื่องซักผ้า': { fees: [] },
+      'ตู้แช่':       { fees: [] },
+      'ทีวี': { fees: [
+        { id: 'tv_ins', label: 'ประกันหน้าจอ', type: 'per_principal', base: 1000, per: 100, timing: 'pre' }
+      ]},
+      'แอร์': { fees: [
+        { id: 'ac_btu',     label: 'ค่า BTU',    type: 'btu_lookup', timing: 'pre' },
+        { id: 'ac_install', label: 'ค่าติดตั้ง', type: 'user_input', timing: 'post' }
+      ]}
+    }
+  };
+
+  let feeCounter = 100;
+
+  // ─── Rate Table ───────────────────────────────────────────
+  function makeRateRow(months, rate) {
+    const tr = document.createElement('tr');
+    tr.innerHTML = `
+      <td><input type="number" class="m-input" value="${months}" min="1"></td>
+      <td><input type="number" class="r-input" value="${rate}" min="0" step="0.01"></td>
+      <td><button class="btn-del" title="ลบ" onclick="this.closest('tr').remove()">✕</button></td>
+    `;
+    return tr;
+  }
+
+  function buildRateTable(rates) {
+    const tbody = document.getElementById('rate-tbody');
+    tbody.innerHTML = '';
+    rates.forEach(([m, r]) => tbody.appendChild(makeRateRow(m, r)));
+  }
+
+  function addRateRow() {
+    const rows = document.querySelectorAll('#rate-tbody tr');
+    let nextMonth = 6;
+    if (rows.length > 0) {
+      nextMonth = (parseInt(rows[rows.length - 1].querySelector('.m-input').value) || 6) + 1;
+    }
+    const def = DEFAULTS.rates.find(r => r[0] === nextMonth);
+    document.getElementById('rate-tbody').appendChild(makeRateRow(nextMonth, def ? def[1] : ''));
+  }
+
+  // ─── Fee Items ────────────────────────────────────────────
+  const TYPE_LABELS = {
+    user_input:    'ผู้ใช้กรอก',
+    per_principal: 'คำนวณจากทุน',
+    btu_lookup:    'ตาราง BTU',
+    fixed:         'จำนวนคงที่'
+  };
+
+  function makeFeeCard(productKey, fee) {
+    const uid = fee.id || `fee_${++feeCounter}`;
+    const div = document.createElement('div');
+    div.className = 'fee-card';
+    div.dataset.feeId = uid;
+
+    const typeOpts = Object.entries(TYPE_LABELS).map(([v, t]) =>
+      `<option value="${v}" ${fee.type === v ? 'selected' : ''}>${t}</option>`
+    ).join('');
+
+    div.innerHTML = `
+      <div class="fc-row-1">
+        <input type="text" class="fi-label" placeholder="ชื่อรายการ" value="${fee.label || ''}">
+        <select class="fi-type" onchange="onTypeChange(this)">${typeOpts}</select>
+        <button class="btn-del" onclick="this.closest('.fee-card').remove()">✕</button>
+      </div>
+      <div class="fc-config fc-per" ${fee.type !== 'per_principal' ? 'style="display:none"' : ''}>
+        ทุกๆ <input type="number" class="fi-base" value="${fee.base || 1000}" min="1"> บาท
+        → <input type="number" class="fi-per" value="${fee.per || 100}" min="0"> บาท
+      </div>
+      <div class="fc-config fc-fixed" ${fee.type !== 'fixed' ? 'style="display:none"' : ''}>
+        จำนวน <input type="number" class="fi-fixed-val" value="${fee.value || 0}" min="0"> บาท
+      </div>
+      <div class="fc-timing">
+        <label><input type="radio" name="ft_${uid}" value="pre"  ${fee.timing === 'pre'  ? 'checked' : ''}> ก่อนดอกเบี้ย</label>
+        <label><input type="radio" name="ft_${uid}" value="post" ${fee.timing !== 'pre'  ? 'checked' : ''}> หลังดอกเบี้ย</label>
+      </div>
+    `;
+    return div;
+  }
+
+  function onTypeChange(sel) {
+    const card = sel.closest('.fee-card');
+    card.querySelectorAll('.fc-config').forEach(c => c.style.display = 'none');
+    if (sel.value === 'per_principal') card.querySelector('.fc-per').style.display  = '';
+    if (sel.value === 'fixed')         card.querySelector('.fc-fixed').style.display = '';
+  }
+
+  function renderAllProducts(products) {
+    const container = document.getElementById('all-product-fees');
+    container.innerHTML = '';
+    PRODUCTS.forEach(({ key, icon }) => {
+      const fees = (products[key] && products[key].fees) || [];
+      const block = document.createElement('div');
+      block.className = 'pf-block';
+      block.innerHTML = `
+        <div class="pf-header">
+          <span>${icon} ${key}</span>
+          <button class="btn-add-fee" onclick="addFeeItem('${key}')">+ เพิ่มรายการ</button>
+        </div>
+        <div class="pf-list" id="flist-${key}"></div>
+      `;
+      container.appendChild(block);
+      const list = block.querySelector(`#flist-${key}`);
+      if (fees.length === 0) {
+        list.innerHTML = '<div class="pf-empty">ไม่มีรายการค่าใช้จ่ายเพิ่มเติม</div>';
+      } else {
+        fees.forEach(fee => list.appendChild(makeFeeCard(key, fee)));
+      }
+    });
+  }
+
+  function addFeeItem(productKey) {
+    const list = document.getElementById(`flist-${productKey}`);
+    const empty = list.querySelector('.pf-empty');
+    if (empty) empty.remove();
+    list.appendChild(makeFeeCard(productKey, { label: '', type: 'user_input', timing: 'post' }));
+  }
+
+  function collectFees(productKey) {
+    const list = document.getElementById(`flist-${productKey}`);
+    const fees = [];
+    list.querySelectorAll('.fee-card').forEach(card => {
+      const uid  = card.dataset.feeId;
+      const type = card.querySelector('.fi-type').value;
+      const fee  = {
+        id:     uid,
+        label:  card.querySelector('.fi-label').value.trim(),
+        type,
+        timing: card.querySelector(`input[name="ft_${uid}"]:checked`)?.value || 'post'
+      };
+      if (type === 'per_principal') {
+        fee.base = parseFloat(card.querySelector('.fi-base').value) || 1000;
+        fee.per  = parseFloat(card.querySelector('.fi-per').value)  || 100;
+      } else if (type === 'fixed') {
+        fee.value = parseFloat(card.querySelector('.fi-fixed-val').value) || 0;
+      }
+      fees.push(fee);
+    });
+    return fees;
+  }
+
+  // ─── Save / Load ──────────────────────────────────────────
+  function loadSettings() {
+    try {
+      const raw = localStorage.getItem('calcSettings');
+      if (raw) {
+        const p = JSON.parse(raw);
+        return {
+          rates:    p.rates    || DEFAULTS.rates,
+          btuCosts: p.btuCosts || p.btu || DEFAULTS.btuCosts,
+          roundTo:  p.roundTo  !== undefined ? p.roundTo : DEFAULTS.roundTo,
+          products: p.products || DEFAULTS.products
+        };
+      }
+    } catch(e) {}
+    return JSON.parse(JSON.stringify(DEFAULTS));
+  }
+
+  function saveSettings() {
+    const rows = document.querySelectorAll('#rate-tbody tr');
+    const rates = [];
+    rows.forEach(tr => {
+      const m = parseInt(tr.querySelector('.m-input').value);
+      const r = parseFloat(tr.querySelector('.r-input').value);
+      if (!isNaN(m) && !isNaN(r) && m >= 1) rates.push([m, r]);
+    });
+    rates.sort((a, b) => a[0] - b[0]);
+
+    const products = {};
+    PRODUCTS.forEach(({ key }) => { products[key] = { fees: collectFees(key) }; });
+
+    const settings = {
+      rates,
+      btuCosts: {
+        '9000':  parseFloat(document.getElementById('btu-9000').value)  || 0,
+        '12000': parseFloat(document.getElementById('btu-12000').value) || 0,
+        '18000': parseFloat(document.getElementById('btu-18000').value) || 0
+      },
+      roundTo: parseInt(document.getElementById('round-to').value) || 90,
+      products
+    };
+
+    localStorage.setItem('calcSettings', JSON.stringify(settings));
+    showToast('✅ บันทึกเรียบร้อยแล้ว');
+  }
+
+  function resetDefaults() {
+    if (!confirm('รีเซ็ตการตั้งค่าทั้งหมดกลับเป็นค่าเริ่มต้น?')) return;
+    localStorage.removeItem('calcSettings');
+    applyToForm(JSON.parse(JSON.stringify(DEFAULTS)));
+    showToast('↩️ รีเซ็ตเรียบร้อยแล้ว');
+  }
+
+  function applyToForm(s) {
+    buildRateTable(s.rates);
+    const btu = s.btuCosts || DEFAULTS.btuCosts;
+    document.getElementById('btu-9000').value  = btu['9000'];
+    document.getElementById('btu-12000').value = btu['12000'];
+    document.getElementById('btu-18000').value = btu['18000'];
+    document.getElementById('round-to').value  = s.roundTo;
+    renderAllProducts(s.products || DEFAULTS.products);
+  }
+
+  function showToast(msg) {
+    const t = document.getElementById('toast');
+    t.textContent = msg;
+    t.classList.add('show');
+    setTimeout(() => t.classList.remove('show'), 2500);
+  }
+
+  applyToForm(loadSettings());
+
+  if ('serviceWorker' in navigator) {
+    navigator.serviceWorker.register('./sw.js').catch(() => {});
+  }
+</script>
+</body>
+</html>

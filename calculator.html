@@ -1,0 +1,538 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#0d47a1">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <link rel="manifest" href="manifest.json">
+  <link rel="apple-touch-icon" href="icons/icon-192.png">
+  <title>คำนวณค่างวด</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: 'Sarabun', 'Segoe UI', sans-serif;
+      background: #f0f4f8;
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+    }
+    .card {
+      background: white; border-radius: 16px;
+      box-shadow: 0 4px 24px rgba(0,0,0,0.10);
+      width: 100%; max-width: 520px; overflow: hidden;
+    }
+    .card-header {
+      background: linear-gradient(135deg, #1a73e8, #0d47a1);
+      color: white; padding: 28px 32px;
+    }
+    .card-header h1 { font-size: 1.6rem; font-weight: 700; margin-bottom: 4px; }
+    .card-header p { opacity: 0.85; font-size: 0.95rem; }
+    .back-btn {
+      display: inline-flex; align-items: center; gap: 6px;
+      color: rgba(255,255,255,0.8); font-size: 0.85rem;
+      text-decoration: none; margin-bottom: 14px; transition: color 0.15s;
+    }
+    .back-btn:hover { color: #fff; }
+    .card-body { padding: 32px; }
+    .field { margin-bottom: 20px; }
+    label {
+      display: block; font-size: 0.9rem; color: #555;
+      margin-bottom: 6px; font-weight: 600;
+    }
+    .input-group {
+      display: flex; align-items: center;
+      border: 1.5px solid #dde1e7; border-radius: 10px;
+      overflow: hidden; transition: border-color 0.2s;
+    }
+    .input-group:focus-within { border-color: #1a73e8; }
+    .input-group input, .input-group select {
+      flex: 1; border: none; outline: none;
+      padding: 12px 14px; font-size: 1rem;
+      font-family: inherit; background: transparent;
+    }
+    .input-unit {
+      padding: 12px 14px; background: #f5f7fa;
+      color: #777; font-size: 0.9rem;
+      border-left: 1.5px solid #dde1e7; white-space: nowrap;
+    }
+    .auto-field { background: #f5f7fa; }
+    .auto-field input { color: #1a73e8; font-weight: 700; }
+    .rate-badge {
+      display: inline-block; margin-top: 8px; padding: 5px 14px;
+      background: #e8f0fe; color: #1a73e8;
+      border-radius: 20px; font-size: 0.9rem; font-weight: 700;
+    }
+    .rate-table-wrap { margin-bottom: 20px; }
+    .rate-table-wrap summary {
+      cursor: pointer; font-size: 0.85rem; color: #1a73e8;
+      margin-bottom: 8px; user-select: none;
+    }
+    .rate-mini { width: 100%; border-collapse: collapse; font-size: 0.82rem; margin-top: 8px; }
+    .rate-mini th { background: #e8f0fe; color: #1a73e8; padding: 6px 10px; text-align: center; }
+    .rate-mini td { padding: 5px 10px; text-align: center; border-bottom: 1px solid #eee; color: #333; }
+    .rate-mini tr.active td { background: #fff3e0; font-weight: 700; color: #e65100; }
+    .btn-calc {
+      width: 100%; padding: 14px;
+      background: linear-gradient(135deg, #1a73e8, #0d47a1);
+      color: white; border: none; border-radius: 10px;
+      font-size: 1.05rem; font-family: inherit; font-weight: 700;
+      cursor: pointer; margin-top: 8px; transition: opacity 0.2s;
+    }
+    .btn-calc:hover { opacity: 0.9; }
+    .result-box {
+      margin-top: 28px; background: #f0f4f8;
+      border-radius: 12px; padding: 24px; display: none;
+    }
+    .result-box.show { display: block; }
+    .result-main { text-align: center; margin-bottom: 20px; }
+    .result-main .label { font-size: 0.9rem; color: #666; margin-bottom: 4px; }
+    .result-main .amount { font-size: 2.4rem; font-weight: 800; color: #1a73e8; }
+    .result-main .unit { font-size: 1rem; color: #555; margin-top: 2px; }
+    .divider { border: none; border-top: 1px solid #dde1e7; margin: 16px 0; }
+    .result-row {
+      display: flex; justify-content: space-between;
+      margin-bottom: 10px; font-size: 0.95rem;
+    }
+    .result-row .key { color: #666; }
+    .result-row .val { font-weight: 600; color: #333; }
+    .result-row .val.red { color: #e53935; }
+    .amortize-toggle { text-align: center; margin-top: 16px; }
+    .btn-table {
+      background: none; border: 1.5px solid #1a73e8; color: #1a73e8;
+      border-radius: 8px; padding: 8px 20px; font-family: inherit;
+      font-size: 0.9rem; cursor: pointer; transition: all 0.2s;
+    }
+    .btn-table:hover { background: #e8f0fe; }
+    .amortize-table { margin-top: 20px; display: none; overflow-x: auto; }
+    .amortize-table.show { display: block; }
+    table { width: 100%; border-collapse: collapse; font-size: 0.85rem; }
+    th { background: #1a73e8; color: white; padding: 8px 10px; text-align: right; }
+    th:first-child { text-align: center; }
+    td { padding: 7px 10px; text-align: right; border-bottom: 1px solid #eee; color: #333; }
+    td:first-child { text-align: center; color: #888; }
+    tr:nth-child(even) td { background: #f7f9fc; }
+  </style>
+</head>
+<body>
+<div class="card">
+  <div class="card-header">
+    <a class="back-btn" href="index.html">← หน้าหลัก</a>
+    <h1>คำนวณค่างวด</h1>
+    <p>อัตราดอกเบี้ยตามจำนวนงวด</p>
+  </div>
+  <div class="card-body">
+
+    <div class="field">
+      <label>ประเภทสินค้า</label>
+      <div class="input-group">
+        <select id="product">
+          <option value="">— เลือกประเภทสินค้า —</option>
+          <option value="ตู้เย็น">ตู้เย็น</option>
+          <option value="เครื่องซักผ้า">เครื่องซักผ้า</option>
+          <option value="ตู้แช่">ตู้แช่</option>
+          <option value="ทีวี">ทีวี</option>
+          <option value="แอร์">แอร์</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="field">
+      <label>วงเงินกู้ / ราคาสินค้า (บาท)</label>
+      <div class="input-group">
+        <input type="number" id="principal" placeholder="เช่น 10000" min="0" oninput="onPrincipalChange()">
+        <span class="input-unit">บาท</span>
+      </div>
+    </div>
+
+    <!-- Dynamic fee inputs -->
+    <div id="dynamic-fees"></div>
+
+    <div class="field">
+      <label>จำนวนงวด (เดือน) — ขั้นต่ำ 6 งวด</label>
+      <div class="input-group">
+        <input type="number" id="periods" placeholder="เช่น 6" min="6" oninput="updateRateBadge()">
+        <span class="input-unit">งวด</span>
+      </div>
+      <div class="rate-badge" id="rate-badge">กรอกจำนวนงวดเพื่อดูอัตราดอกเบี้ย</div>
+    </div>
+
+    <div class="rate-table-wrap">
+      <details>
+        <summary>ดูตารางอัตราดอกเบี้ยทั้งหมด</summary>
+        <table class="rate-mini" id="rate-ref-table">
+          <thead><tr><th>จำนวนงวด</th><th>อัตราดอกเบี้ย (%)</th></tr></thead>
+          <tbody id="rate-ref-body"></tbody>
+        </table>
+      </details>
+    </div>
+
+    <button class="btn-calc" onclick="calculate()">คำนวณ</button>
+
+    <div class="result-box" id="result">
+      <div class="result-main">
+        <div class="label">ค่างวดต่อเดือน</div>
+        <div class="amount" id="r-monthly">0</div>
+        <div class="unit">บาท / งวด</div>
+      </div>
+      <div style="font-size:0.8rem;color:#888;text-align:center;margin-top:-10px;margin-bottom:10px;">
+        ก่อนปัด: <span id="r-raw-monthly" style="color:#e65100;font-weight:600;">—</span>
+      </div>
+      <hr class="divider">
+      <div class="result-row" id="r-product-row" style="display:none;">
+        <span class="key">ประเภทสินค้า</span>
+        <span class="val" id="r-product">—</span>
+      </div>
+      <div class="result-row">
+        <span class="key">เงินต้น</span>
+        <span class="val" id="r-principal">—</span>
+      </div>
+      <!-- Dynamic pre-interest fee rows + base subtotal -->
+      <div id="r-pre-fees"></div>
+      <!-- Rate + interest -->
+      <div class="result-row">
+        <span class="key">อัตราดอกเบี้ย</span>
+        <span class="val" id="r-rate">—</span>
+      </div>
+      <div class="result-row">
+        <span class="key">ดอกเบี้ยรวม</span>
+        <span class="val red" id="r-interest">—</span>
+      </div>
+      <!-- Dynamic post-interest fee rows + grand total before divide -->
+      <div id="r-post-fees"></div>
+      <div class="result-row">
+        <span class="key">ยอดชำระรวมทั้งหมด</span>
+        <span class="val" id="r-total">—</span>
+      </div>
+      <div class="result-row">
+        <span class="key">จำนวนงวด</span>
+        <span class="val" id="r-periods">—</span>
+      </div>
+
+      <div class="amortize-toggle">
+        <button class="btn-table" onclick="toggleTable()">ดูตารางผ่อนชำระ</button>
+      </div>
+      <div class="amortize-table" id="amortize-table">
+        <table>
+          <thead>
+            <tr><th>งวดที่</th><th>ค่างวด</th><th>เงินต้น</th><th>ดอกเบี้ย</th><th>คงเหลือ</th></tr>
+          </thead>
+          <tbody id="amortize-body"></tbody>
+        </table>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<script>
+  const DEFAULTS = {
+    rates: [[6,70],[7,75],[8,80],[9,90],[10,100],[11,110],[12,120],[13,130],[14,140],[15,150]],
+    btuCosts: { '9000': 1250, '12000': 3000, '18000': 3500 },
+    roundTo: 90,
+    products: {
+      'ตู้เย็น':      { fees: [] },
+      'เครื่องซักผ้า': { fees: [] },
+      'ตู้แช่':       { fees: [] },
+      'ทีวี': { fees: [
+        { id: 'tv_ins', label: 'ประกันหน้าจอ', type: 'per_principal', base: 1000, per: 100, timing: 'pre' }
+      ]},
+      'แอร์': { fees: [
+        { id: 'ac_btu',     label: 'ค่า BTU',    type: 'btu_lookup', timing: 'pre' },
+        { id: 'ac_install', label: 'ค่าติดตั้ง', type: 'user_input', timing: 'post' }
+      ]}
+    }
+  };
+
+  function getSettings() {
+    try {
+      const raw = localStorage.getItem('calcSettings');
+      if (raw) {
+        const p = JSON.parse(raw);
+        return {
+          rates:    p.rates    || DEFAULTS.rates,
+          btuCosts: p.btuCosts || p.btu || DEFAULTS.btuCosts,
+          roundTo:  p.roundTo  !== undefined ? p.roundTo : DEFAULTS.roundTo,
+          products: p.products || DEFAULTS.products
+        };
+      }
+    } catch(e) {}
+    return JSON.parse(JSON.stringify(DEFAULTS));
+  }
+
+  function getRate(n) {
+    const entry = getSettings().rates.find(r => r[0] === n);
+    return entry ? entry[1] : null;
+  }
+
+  function getFees(product) {
+    if (!product) return [];
+    const s = getSettings();
+    const prods = s.products || DEFAULTS.products;
+    return (prods[product] && prods[product].fees) || [];
+  }
+
+  function fmt(n) {
+    return n.toLocaleString('th-TH', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  }
+
+  function roundToTarget(n) {
+    const t = getSettings().roundTo;
+    const rem = n % 100;
+    if (rem <= t) return Math.floor(n / 100) * 100 + t;
+    return (Math.floor(n / 100) + 1) * 100 + t;
+  }
+
+  // ─── Rate table reference ─────────────────────────────────
+  function buildRateTable() {
+    const rates = getSettings().rates;
+    document.getElementById('rate-ref-body').innerHTML = rates.map(([m, r]) =>
+      `<tr id="ref-row-${m}"><td>${m} งวด</td><td>${r}%</td></tr>`
+    ).join('');
+  }
+
+  function updateRateBadge() {
+    const n = parseInt(document.getElementById('periods').value);
+    const badge = document.getElementById('rate-badge');
+    document.querySelectorAll('.rate-mini tr').forEach(r => r.classList.remove('active'));
+    if (!n || n < 6) {
+      badge.textContent = 'ขั้นต่ำ 6 งวด';
+      badge.style.cssText = 'background:#fce4ec;color:#c62828';
+      return;
+    }
+    const rate = getRate(n);
+    if (rate === null) {
+      badge.textContent = `ไม่รองรับ ${n} งวด — กรุณาตั้งค่า`;
+      badge.style.cssText = 'background:#fff3e0;color:#e65100';
+      return;
+    }
+    badge.textContent = `${n} งวด → ดอกเบี้ย ${rate}% ของเงินต้น`;
+    badge.style.cssText = 'background:#e8f0fe;color:#1a73e8';
+    const row = document.getElementById(`ref-row-${n}`);
+    if (row) row.classList.add('active');
+  }
+
+  // ─── Dynamic fee inputs ───────────────────────────────────
+  function renderFeeInputs(product) {
+    const fees = getFees(product);
+    const container = document.getElementById('dynamic-fees');
+    container.innerHTML = '';
+
+    fees.forEach(fee => {
+      if (fee.type === 'per_principal') {
+        container.appendChild(makeFeeField(fee.id,
+          `${fee.label} (อัตโนมัติ)`,
+          `<input type="text" id="fee-${fee.id}" readonly>`,
+          true
+        ));
+      } else if (fee.type === 'user_input') {
+        container.appendChild(makeFeeField(fee.id,
+          fee.label,
+          `<input type="number" id="fee-${fee.id}" min="0" placeholder="กรอกจำนวน">`,
+          false
+        ));
+      } else if (fee.type === 'btu_lookup') {
+        const btuField = makeFeeField(fee.id + '_sel',
+          `ขนาด BTU (${fee.label})`,
+          `<select id="fee-btu-${fee.id}" onchange="onBtuChange('${fee.id}')">
+            <option value="">— เลือกขนาด BTU —</option>
+            <option value="9000">9,000 BTU</option>
+            <option value="12000">12,000–15,000 BTU</option>
+            <option value="18000">18,000 BTU ขึ้นไป</option>
+          </select>`,
+          false
+        );
+        container.appendChild(btuField);
+        const costField = makeFeeField(fee.id,
+          `${fee.label} (อัตโนมัติ)`,
+          `<input type="text" id="fee-${fee.id}" readonly>`,
+          true
+        );
+        costField.style.display = 'none';
+        costField.id = `fee-btu-cost-wrap-${fee.id}`;
+        container.appendChild(costField);
+      }
+      // fixed: no input shown
+    });
+
+    updatePrincipalFees();
+  }
+
+  function makeFeeField(id, labelText, inputHtml, isAuto) {
+    const div = document.createElement('div');
+    div.className = 'field';
+    div.id = `fee-wrap-${id}`;
+    div.innerHTML = `
+      <label>${labelText}</label>
+      <div class="input-group${isAuto ? ' auto-field' : ''}">
+        ${inputHtml}
+        <span class="input-unit">บาท</span>
+      </div>
+    `;
+    return div;
+  }
+
+  function onBtuChange(feeId) {
+    const s = getSettings();
+    const btu = document.getElementById(`fee-btu-${feeId}`).value;
+    const btuCosts = s.btuCosts || DEFAULTS.btuCosts;
+    const cost = btu ? (btuCosts[btu] || 0) : 0;
+    const costEl = document.getElementById(`fee-${feeId}`);
+    const wrap = document.getElementById(`fee-btu-cost-wrap-${feeId}`);
+    if (costEl) costEl.value = cost ? cost.toLocaleString('th-TH') : '';
+    if (wrap) wrap.style.display = btu ? '' : 'none';
+  }
+
+  function updatePrincipalFees() {
+    const P = parseFloat(document.getElementById('principal').value) || 0;
+    if (P <= 0) return;
+    const product = document.getElementById('product').value;
+    getFees(product).filter(f => f.type === 'per_principal').forEach(fee => {
+      const el = document.getElementById(`fee-${fee.id}`);
+      if (el) el.value = (Math.floor(P / fee.base) * fee.per).toLocaleString('th-TH');
+    });
+  }
+
+  function onPrincipalChange() { updatePrincipalFees(); }
+
+  document.getElementById('product').addEventListener('change', function() {
+    renderFeeInputs(this.value);
+  });
+
+  // ─── Calculate ────────────────────────────────────────────
+  function calculate() {
+    const P = parseFloat(document.getElementById('principal').value);
+    const n = parseInt(document.getElementById('periods').value);
+
+    if (!P || !n || P <= 0 || n < 6) {
+      alert('กรุณากรอกวงเงินและจำนวนงวด (ขั้นต่ำ 6 งวด)');
+      return;
+    }
+
+    const rate = getRate(n);
+    if (rate === null) {
+      alert(`ไม่รองรับจำนวนงวด ${n} งวด\nกรุณาเพิ่มอัตราดอกเบี้ยในหน้าตั้งค่า`);
+      return;
+    }
+
+    const product = document.getElementById('product').value;
+    const fees = getFees(product);
+    const s = getSettings();
+    const btuCosts = s.btuCosts || DEFAULTS.btuCosts;
+
+    const preFees = [], postFees = [];
+    let hasError = false;
+
+    fees.forEach(fee => {
+      let amount = 0;
+      if (fee.type === 'per_principal') {
+        amount = Math.floor(P / fee.base) * fee.per;
+      } else if (fee.type === 'user_input') {
+        const el = document.getElementById(`fee-${fee.id}`);
+        amount = el ? (parseFloat(el.value) || 0) : 0;
+      } else if (fee.type === 'btu_lookup') {
+        const btuSel = document.getElementById(`fee-btu-${fee.id}`);
+        if (!btuSel || !btuSel.value) {
+          alert(`กรุณาเลือกขนาด BTU สำหรับ "${fee.label}"`);
+          hasError = true; return;
+        }
+        amount = btuCosts[btuSel.value] || 0;
+      } else if (fee.type === 'fixed') {
+        amount = fee.value || 0;
+      }
+      (fee.timing === 'pre' ? preFees : postFees).push({ label: fee.label, amount });
+    });
+
+    if (hasError) return;
+
+    const totalPre = preFees.reduce((s, f) => s + f.amount, 0);
+    const base = P + totalPre;
+    const totalInterest = base * rate / 100;
+    const afterInterest = base + totalInterest;
+    const totalPost = postFees.reduce((s, f) => s + f.amount, 0);
+    const finalBase = afterInterest + totalPost;
+    const rawMonthly = finalBase / n;
+    const monthly = roundToTarget(rawMonthly);
+    const totalPayment = monthly * n;
+    const basePer = finalBase / n;
+    const interestPer = monthly - basePer;
+
+    // Update result
+    document.getElementById('r-monthly').textContent = fmt(monthly);
+    document.getElementById('r-raw-monthly').textContent = fmt(rawMonthly) + ' บาท';
+
+    if (product) {
+      document.getElementById('r-product').textContent = product;
+      document.getElementById('r-product-row').style.display = 'flex';
+    } else {
+      document.getElementById('r-product-row').style.display = 'none';
+    }
+
+    document.getElementById('r-principal').textContent = fmt(P) + ' บาท';
+
+    // Pre-interest fee rows
+    const preDiv = document.getElementById('r-pre-fees');
+    preDiv.innerHTML = preFees.map(f =>
+      `<div class="result-row"><span class="key">${f.label}</span><span class="val red">${fmt(f.amount)} บาท</span></div>`
+    ).join('');
+    if (preFees.length > 0) {
+      preDiv.innerHTML += `<div class="result-row"><span class="key">ทุน + ส่วนเพิ่ม (ก่อน%)</span><span class="val">${fmt(base)} บาท</span></div>`;
+    }
+
+    document.getElementById('r-rate').textContent = rate + '%';
+    document.getElementById('r-interest').textContent = fmt(totalInterest) + ' บาท';
+
+    // Post-interest fee rows
+    const postDiv = document.getElementById('r-post-fees');
+    postDiv.innerHTML = postFees.map(f =>
+      `<div class="result-row"><span class="key">${f.label}</span><span class="val red">${fmt(f.amount)} บาท</span></div>`
+    ).join('');
+    if (postFees.length > 0) {
+      postDiv.innerHTML += `<div class="result-row"><span class="key">รวมก่อนหาร</span><span class="val">${fmt(finalBase)} บาท</span></div>`;
+    }
+
+    document.getElementById('r-total').textContent = fmt(totalPayment) + ' บาท';
+    document.getElementById('r-periods').textContent = n + ' งวด';
+
+    // Amortize table
+    let balance = finalBase;
+    let rows = '';
+    for (let i = 1; i <= n; i++) {
+      balance -= basePer;
+      rows += `<tr>
+        <td>${i}</td><td>${fmt(monthly)}</td><td>${fmt(basePer)}</td>
+        <td>${fmt(interestPer)}</td><td>${fmt(Math.max(0, balance))}</td>
+      </tr>`;
+    }
+    document.getElementById('amortize-body').innerHTML = rows;
+    document.getElementById('amortize-table').classList.remove('show');
+    document.getElementById('result').classList.add('show');
+  }
+
+  function toggleTable() {
+    const t = document.getElementById('amortize-table');
+    const btn = document.querySelector('.btn-table');
+    btn.textContent = t.classList.toggle('show') ? 'ซ่อนตารางผ่อนชำระ' : 'ดูตารางผ่อนชำระ';
+  }
+
+  // ─── Init ─────────────────────────────────────────────────
+  buildRateTable();
+
+  (function() {
+    const pre = new URLSearchParams(window.location.search).get('product');
+    if (pre) {
+      const sel = document.getElementById('product');
+      sel.value = pre;
+      sel.dispatchEvent(new Event('change'));
+    }
+  })();
+
+  if ('serviceWorker' in navigator) {
+    navigator.serviceWorker.register('./sw.js').catch(() => {});
+  }
+</script>
+</body>
+</html>

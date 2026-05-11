@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8">
+  <title>สร้างไอคอน PWA</title>
+  <style>
+    body { font-family: sans-serif; background: #f0f4f8; padding: 32px; text-align: center; }
+    h2 { color: #0d47a1; margin-bottom: 24px; }
+    canvas { display: block; margin: 12px auto; border-radius: 12px; box-shadow: 0 4px 16px rgba(0,0,0,0.15); }
+    .btn {
+      display: inline-block; margin: 8px;
+      padding: 12px 28px; background: #0d47a1; color: white;
+      border: none; border-radius: 8px; font-size: 1rem; cursor: pointer;
+      text-decoration: none;
+    }
+    .btn:hover { background: #1565c0; }
+    .step { background: white; border-radius: 12px; padding: 20px; max-width: 500px; margin: 24px auto; text-align: left; box-shadow: 0 2px 8px rgba(0,0,0,0.08); }
+    .step h3 { color: #0d47a1; margin-bottom: 10px; }
+    .step li { margin: 6px 0; line-height: 1.6; }
+    code { background: #e8f0fe; padding: 2px 6px; border-radius: 4px; font-size: 0.9em; }
+  </style>
+</head>
+<body>
+  <h2>สร้างไอคอน PWA</h2>
+  <p>คลิกปุ่มด้านล่างเพื่อดาวน์โหลดไอคอนทั้งสองขนาด แล้วบันทึกไว้ในโฟลเดอร์ <code>icons/</code></p>
+
+  <canvas id="c192" width="192" height="192"></canvas>
+  <a id="dl192" class="btn" download="icon-192.png">ดาวน์โหลด icon-192.png</a>
+
+  <canvas id="c512" width="512" height="512"></canvas>
+  <a id="dl512" class="btn" download="icon-512.png">ดาวน์โหลด icon-512.png</a>
+
+  <div class="step">
+    <h3>วิธีใช้งาน</h3>
+    <ol>
+      <li>ดาวน์โหลดไฟล์ทั้งสอง</li>
+      <li>วางไฟล์ไว้ในโฟลเดอร์ <code>icons/</code> ของโปรเจกต์</li>
+      <li>เปิด <code>server.bat</code> เพื่อรัน HTTP server</li>
+      <li>เปิดเบราว์เซอร์ไปที่ <code>http://localhost:8080</code></li>
+      <li>บน Android: เมนู → "เพิ่มในหน้าจอหลัก" หรือ "ติดตั้งแอป"</li>
+    </ol>
+  </div>
+
+  <script>
+    function drawIcon(canvas, size) {
+      const ctx = canvas.getContext('2d');
+      const r = size * 0.188;
+
+      // rounded rect background
+      ctx.beginPath();
+      ctx.moveTo(r, 0);
+      ctx.lineTo(size - r, 0);
+      ctx.quadraticCurveTo(size, 0, size, r);
+      ctx.lineTo(size, size - r);
+      ctx.quadraticCurveTo(size, size, size - r, size);
+      ctx.lineTo(r, size);
+      ctx.quadraticCurveTo(0, size, 0, size - r);
+      ctx.lineTo(0, r);
+      ctx.quadraticCurveTo(0, 0, r, 0);
+      ctx.closePath();
+      ctx.fillStyle = '#0d47a1';
+      ctx.fill();
+
+      // baht symbol
+      ctx.fillStyle = 'white';
+      ctx.font = `900 ${Math.round(size * 0.62)}px Arial, sans-serif`;
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText('฿', size / 2, size * 0.54);
+    }
+
+    const c192 = document.getElementById('c192');
+    const c512 = document.getElementById('c512');
+    drawIcon(c192, 192);
+    drawIcon(c512, 512);
+
+    document.getElementById('dl192').href = c192.toDataURL('image/png');
+    document.getElementById('dl512').href = c512.toDataURL('image/png');
+  </script>
+</body>
+</html>
