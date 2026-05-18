@@ -238,10 +238,9 @@
       'เครื่องซักผ้า': { fees: [] },
       'ตู้แช่':       { fees: [] },
       'ทีวี': { fees: [
-        { id: 'tv_ins', label: 'ประกันหน้าจอ', type: 'per_principal', base: 1000, per: 100, timing: 'pre' }
+        { id: 'tv_ins', label: 'ประกันหน้าจอ', type: 'per_principal', base: 1000, per: 100, timing: 'post' }
       ]},
       'แอร์': { fees: [
-        { id: 'ac_btu',     label: 'ค่า BTU',    type: 'btu_lookup', timing: 'pre' },
         { id: 'ac_install', label: 'ค่าติดตั้ง', type: 'user_input', timing: 'post' }
       ]}
     }
